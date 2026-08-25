@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>2인용 태블릿 맞고</title>
+    <title>2인용 정통 맞고</title>
     <style>
         :root {
-            --bg-mat: #0a401b;
-            --card-red: #c0392b;
-            --card-bg: #fffbf0;
-            --p1-col: #ff4757;
-            --p2-col: #1e90ff;
+            --mat-bg: #0b4f26;
+            --card-red: #b91c1c;
+            --card-face: #fef3c7;
+            --gold: #fbbf24;
         }
 
         * {
@@ -22,7 +21,7 @@
         }
 
         body {
-            background: radial-gradient(circle, #135227 0%, var(--bg-mat) 100%);
+            background: radial-gradient(circle, #15803d 0%, var(--mat-bg) 100%);
             color: white;
             height: 100vh;
             display: flex;
@@ -36,100 +35,102 @@
             flex-direction: column;
             justify-content: space-between;
             position: relative;
-            padding: 10px;
+            padding: 12px;
         }
 
-        /* 플레이어 구역 */
+        /* 플레이어 영역 */
         .player-zone {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
             padding: 10px;
-            background: rgba(0, 0, 0, 0.25);
-            border-radius: 16px;
-            transition: opacity 0.3s;
+            background: rgba(0, 0, 0, 0.35);
+            border-radius: 12px;
+            transition: opacity 0.2s;
         }
 
         .p2-zone { transform: rotate(180deg); }
-        .disabled { opacity: 0.4; pointer-events: none; }
+        .disabled { opacity: 0.35; pointer-events: none; }
 
         .info-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            font-size: 14px;
             font-weight: bold;
-            font-size: 15px;
-            padding: 0 5px;
         }
 
         .hand {
             display: flex;
-            gap: 6px;
+            gap: 5px;
             justify-content: center;
-            min-height: 80px;
+            min-height: 85px;
             flex-wrap: wrap;
         }
 
-        /* 획득한 패 (점수판) */
-        .captured-box {
+        /* 획득한 패 세부 구분 (광, 열, 띠, 피) */
+        .captured-zone {
             display: flex;
-            gap: 12px;
-            font-size: 12px;
-            background: rgba(0,0,0,0.3);
-            padding: 4px 10px;
-            border-radius: 8px;
+            gap: 8px;
+            background: rgba(0,0,0,0.4);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
         }
+        .cap-group { display: flex; gap: 2px; align-items: center; }
 
         /* 화투 카드 스타일 */
         .card {
-            width: 50px;
-            height: 75px;
-            background-color: var(--card-bg);
-            border-radius: 6px;
-            border: 2px solid #222;
+            width: 48px;
+            height: 72px;
+            background-color: var(--card-face);
+            border-radius: 5px;
+            border: 2px solid #111;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: space-between;
-            padding: 4px 2px;
+            padding: 3px 2px;
             color: #111;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.4);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.5);
             cursor: pointer;
             position: relative;
         }
 
         .card.back {
-            background: linear-gradient(135deg, var(--card-red) 0%, #880e4f 100%);
-            border-color: #ffd700;
+            background: linear-gradient(135deg, var(--card-red) 0%, #7f1d1d 100%);
+            border-color: var(--gold);
         }
         .card.back * { display: none; }
 
-        .card-month { font-size: 12px; font-weight: 900; color: var(--card-red); }
-        .card-icon { font-size: 20px; }
-        .card-type {
+        .card-month { font-size: 11px; font-weight: 900; color: var(--card-red); }
+        .card-icon { font-size: 22px; }
+        .card-tag {
             font-size: 9px;
             font-weight: bold;
             padding: 1px 3px;
             border-radius: 3px;
             background: #e2e8f0;
         }
-        .card-type.kwang { background: #ffd700; color: #000; }
+        .card-tag.kwang { background: var(--gold); color: #000; }
+        .card-tag.hong { background: #f87171; color: #fff; }
+        .card-tag.chung { background: #60a5fa; color: #fff; }
 
         /* 바닥 판 */
         .center-board {
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 92%;
-            max-width: 600px;
-            background: rgba(0, 0, 0, 0.45);
+            width: 95%;
+            max-width: 620px;
+            background: rgba(0, 0, 0, 0.5);
             border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 20px;
+            border-radius: 16px;
             padding: 12px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         .field {
@@ -141,13 +142,14 @@
             width: 100%;
         }
 
-        .msg {
-            font-size: 15px;
+        .status-text {
+            font-size: 14px;
             font-weight: bold;
-            color: #ffd700;
+            color: var(--gold);
             text-align: center;
         }
 
+        /* 팝업 레이어 (고/스톱 및 승리) */
         .overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -157,10 +159,14 @@
             align-items: center;
             justify-content: center;
             z-index: 100;
-            gap: 20px;
+            gap: 15px;
         }
-        .overlay h1 { font-size: 36px; color: #ffd700; }
-        .btn { padding: 12px 30px; font-size: 18px; font-weight: bold; background: var(--p1-col); border: none; border-radius: 25px; color: white; cursor: pointer; }
+        .overlay h1 { font-size: 32px; color: var(--gold); text-align: center; }
+        .btn-group { display: flex; gap: 15px; }
+        .btn { padding: 12px 28px; font-size: 18px; font-weight: bold; border: none; border-radius: 20px; color: white; cursor: pointer; }
+        .btn-go { background: #22c55e; }
+        .btn-stop { background: #ef4444; }
+        .btn-restart { background: #3b82f6; }
     </style>
 </head>
 <body>
@@ -170,22 +176,22 @@
         <div class="player-zone p2-zone" id="p2Zone">
             <div class="info-bar">
                 <span>PLAYER 2</span>
-                <div class="captured-box">
-                    <span>광:<b id="p2Kwang">0</b></span>
-                    <span>열:<b id="p2Yul">0</b></span>
-                    <span>띠:<b id="p2Tti">0</b></span>
-                    <span>피:<b id="p2Pi">0</b></span>
+                <div class="captured-zone">
+                    <div class="cap-group">광:<span id="p2Kwang">0</span></div>
+                    <div class="cap-group">열:<span id="p2Yul">0</span></div>
+                    <div class="cap-group">띠:<span id="p2Tti">0</span></div>
+                    <div class="cap-group">피:<span id="p2Pi">0</span></div>
                 </div>
-                <span>점수: <span id="p2Score" style="color:#ffd700">0</span>점</span>
+                <span><span id="p2Score" style="color:var(--gold); font-size:18px;">0</span>점 (<span id="p2Go">0</span>고)</span>
             </div>
             <div class="hand" id="p2Hand"></div>
         </div>
 
         <!-- 바닥 판 -->
         <div class="center-board">
-            <div class="msg" id="msg">P1 차례입니다. 패를 내세요!</div>
+            <div class="status-text" id="statusText">P1 차례입니다. 짝을 맞춰 패를 내세요!</div>
             <div class="field" id="field"></div>
-            <div style="font-size: 11px; color: #aaa;">남은 덱: <span id="deckCnt">0</span>장</div>
+            <div style="font-size: 11px; color: #9ca3af;">남은 덱: <span id="deckCnt">0</span>장</div>
         </div>
 
         <!-- P1 (하단) -->
@@ -193,40 +199,64 @@
             <div class="hand" id="p1Hand"></div>
             <div class="info-bar">
                 <span>PLAYER 1</span>
-                <div class="captured-box">
-                    <span>광:<b id="p1Kwang">0</b></span>
-                    <span>열:<b id="p1Yul">0</b></span>
-                    <span>띠:<b id="p1Tti">0</b></span>
-                    <span>피:<b id="p1Pi">0</b></span>
+                <div class="captured-zone">
+                    <div class="cap-group">광:<span id="p1Kwang">0</span></div>
+                    <div class="cap-group">열:<span id="p1Yul">0</span></div>
+                    <div class="cap-group">띠:<span id="p1Tti">0</span></div>
+                    <div class="cap-group">피:<span id="p1Pi">0</span></div>
                 </div>
-                <span>점수: <span id="p1Score" style="color:#ffd700">0</span>점</span>
+                <span><span id="p1Score" style="color:var(--gold); font-size:18px;">0</span>점 (<span id="p1Go">0</span>고)</span>
             </div>
         </div>
     </div>
 
-    <div class="overlay" id="overlay" style="display:none;">
+    <!-- 고 / 스톱 결정 팝업 -->
+    <div class="overlay" id="goStopOverlay" style="display:none;">
+        <h1 id="goStopTitle">7점 달성!</h1>
+        <div class="btn-group">
+            <button class="btn btn-go" onclick="chooseGo()">GO! (+1점 도박)</button>
+            <button class="btn btn-stop" onclick="chooseStop()">STOP! (승리 확정)</button>
+        </div>
+    </div>
+
+    <!-- 게임 종료 팝업 -->
+    <div class="overlay" id="endOverlay" style="display:none;">
         <h1 id="winnerText">게임 종료</h1>
-        <button class="btn" onclick="initGame()">다시 하기</button>
+        <button class="btn btn-restart" onclick="initGame()">다시 하기</button>
     </div>
 
     <script>
-        const MONTH_ICONS = ['🌸','🍃','🌙','🐦','🌾','🍁','📜','🦌','🍷','🎴','🎄','🎁'];
+        const ICONS = ['🌸','🍃','🌙','🐦','🌾','🍁','📜','🦌','🍷','🎴','🎄','🎁'];
         let deck = [], field = [], p1Hand = [], p2Hand = [];
         let p1Cap = [], p2Cap = [];
+        let p1Score = 0, p2Score = 0;
+        let p1Go = 0, p2Go = 0;
         let turn = 1;
 
-        // 화투 48장덱 생성 (월별 4장: 광, 십끗, 띠, 피)
+        // 화투 48장 정통 구성 정의
         function createDeck() {
             let cards = [];
             for (let m = 1; m <= 12; m++) {
-                const icon = MONTH_ICONS[m-1];
-                // 각 월의 구성 (광, 열, 띠, 피)
-                let types = ['피', '피', '띠', '열'];
-                if ([1, 3, 8, 11, 12].includes(m)) types[0] = '광';
-                
-                types.forEach((t, i) => {
-                    cards.push({ month: m, icon: icon, type: t, id: Math.random() });
-                });
+                const icon = ICONS[m-1];
+                for (let typeIdx = 0; typeIdx < 4; typeIdx++) {
+                    let type = '피';
+                    let subType = '';
+
+                    if (typeIdx === 0 && [1,3,8,11,12].includes(m)) {
+                        type = '광';
+                    } else if (typeIdx === 1 && [2,4,8,9,10].includes(m)) {
+                        type = '열';
+                    } else if (typeIdx === 2) {
+                        type = '띠';
+                        if ([1,2,3].includes(m)) subType = '홍단';
+                        else if ([6,9,10].includes(m)) subType = '청단';
+                        else if ([4,5,7].includes(m)) subType = '초단';
+                    } else if (m === 11 || m === 12) {
+                        if (typeIdx === 3) subType = '쌍피';
+                    }
+
+                    cards.push({ month: m, icon: icon, type: type, subType: subType, id: Math.random() });
+                }
             }
             return cards.sort(() => Math.random() - 0.5);
         }
@@ -234,15 +264,17 @@
         function initGame() {
             deck = createDeck();
             p1Cap = []; p2Cap = [];
+            p1Score = 0; p2Score = 0;
+            p1Go = 0; p2Go = 0;
             turn = 1;
 
-            // 맞고 정통 분배: 각 10장, 바닥 8장, 덱 20장
             p1Hand = deck.splice(0, 10);
             p2Hand = deck.splice(0, 10);
             field = deck.splice(0, 8);
 
-            document.getElementById('overlay').style.display = 'none';
-            document.getElementById('msg').textContent = "P1 차례입니다. 패를 내세요!";
+            document.getElementById('goStopOverlay').style.display = 'none';
+            document.getElementById('endOverlay').style.display = 'none';
+            document.getElementById('statusText').textContent = "P1 차례입니다. 짝을 맞춰 패를 내세요!";
             render();
         }
 
@@ -251,10 +283,14 @@
             el.className = `card ${isBack ? 'back' : ''}`;
             if (!isBack) {
                 const isKwang = card.type === '광';
+                let tagClass = isKwang ? 'kwang' : '';
+                if (card.subType === '홍단') tagClass = 'hong';
+                if (card.subType === '청단') tagClass = 'chung';
+
                 el.innerHTML = `
                     <div class="card-month">${card.month}월</div>
                     <div class="card-icon">${card.icon}</div>
-                    <div class="card-type ${isKwang ? 'kwang' : ''}">${card.type}</div>
+                    <div class="card-tag ${tagClass}">${card.subType || card.type}</div>
                 `;
             }
             if (onClick) el.onclick = onClick;
@@ -262,49 +298,79 @@
         }
 
         function render() {
-            // 바닥패
+            // 바닥 패
             const fieldEl = document.getElementById('field');
             fieldEl.innerHTML = '';
             field.forEach(c => fieldEl.appendChild(renderCard(c, false)));
 
-            // P1 손패
+            // 손패
             const p1El = document.getElementById('p1Hand');
             p1El.innerHTML = '';
             p1Hand.forEach((c, i) => p1El.appendChild(renderCard(c, false, () => playTurn(1, i))));
 
-            // P2 손패
             const p2El = document.getElementById('p2Hand');
             p2El.innerHTML = '';
             p2Hand.forEach((c, i) => p2El.appendChild(renderCard(c, false, () => playTurn(2, i))));
 
-            // 점수 및 획득 패 갱신
-            updateStats(1, p1Cap);
-            updateStats(2, p2Cap);
+            // 점수 계산 및 표시
+            p1Score = calculateScore(1, p1Cap, p1Go);
+            p2Score = calculateScore(2, p2Cap, p2Go);
+
+            document.getElementById('p1Score').textContent = p1Score;
+            document.getElementById('p2Score').textContent = p2Score;
+            document.getElementById('p1Go').textContent = p1Go;
+            document.getElementById('p2Go').textContent = p2Go;
+
             document.getElementById('deckCnt').textContent = deck.length;
 
-            // 턴 처리
             document.getElementById('p1Zone').classList.toggle('disabled', turn !== 1);
             document.getElementById('p2Zone').classList.toggle('disabled', turn !== 2);
         }
 
-        function updateStats(pNum, capList) {
-            const counts = { '광': 0, '열': 0, '띠': 0, '피': 0 };
-            capList.forEach(c => counts[c.type]++);
+        // 맞고 점수 판정 알고리즘 (광, 3단, 피 계산)
+        function calculateScore(pNum, capList, goCount) {
+            let kwang = 0, yul = 0, tti = 0, pi = 0;
+            let hongdan = 0, chungdan = 0, chodan = 0;
 
-            document.getElementById(`p${pNum}Kwang`).textContent = counts['광'];
-            document.getElementById(`p${pNum}Yul`).textContent = counts['열'];
-            document.getElementById(`p${pNum}Tti`).textContent = counts['띠'];
-            document.getElementById(`p${pNum}Pi`).textContent = counts['피'];
+            capList.forEach(c => {
+                if (c.type === '광') kwang++;
+                if (c.type === '열') yul++;
+                if (c.type === '띠') {
+                    tti++;
+                    if (c.subType === '홍단') hongdan++;
+                    if (c.subType === '청단') chungdan++;
+                    if (c.subType === '초단') chodan++;
+                }
+                if (c.type === '피') {
+                    pi += (c.subType === '쌍피' ? 2 : 1);
+                }
+            });
 
-            // 점수 공식: 광(3장=3점, 4장=4점, 5장=15점), 열/띠/피는 기준치 이상 시 +1점씩
+            document.getElementById(`p${pNum}Kwang`).textContent = kwang;
+            document.getElementById(`p${pNum}Yul`).textContent = yul;
+            document.getElementById(`p${pNum}Tti`).textContent = tti;
+            document.getElementById(`p${pNum}Pi`).textContent = pi;
+
             let score = 0;
-            if (counts['광'] === 5) score += 15;
-            else if (counts['광'] >= 3) score += counts['광'];
-            if (counts['열'] >= 5) score += (counts['열'] - 4);
-            if (counts['띠'] >= 5) score += (counts['띠'] - 4);
-            if (counts['피'] >= 10) score += (counts['피'] - 9);
+            // 광 점수
+            if (kwang === 5) score += 15;
+            else if (kwang === 4) score += 4;
+            else if (kwang === 3) score += 3;
 
-            document.getElementById(`p${pNum}Score`).textContent = score;
+            // 단(띠) 점수
+            if (hongdan === 3) score += 3;
+            if (chungdan === 3) score += 3;
+            if (chodan === 3) score += 3;
+            if (tti >= 5) score += (tti - 4);
+
+            // 열 및 피 점수
+            if (yul >= 5) score += (yul - 4);
+            if (pi >= 10) score += (pi - 9);
+
+            // 고 점수
+            score += goCount;
+
+            return score;
         }
 
         function playTurn(pNum, handIdx) {
@@ -312,48 +378,82 @@
 
             const hand = pNum === 1 ? p1Hand : p2Hand;
             const cap = pNum === 1 ? p1Cap : p2Cap;
-            const card = hand.splice(handIdx, 1)[0];
+            const oppCap = pNum === 1 ? p2Cap : p1Cap;
 
-            let text = `P${pNum}: ${card.month}월 제출! `;
+            const card = hand.splice(handIdx, 1)[0];
+            let logMsg = `P${pNum}: ${card.month}월 제출! `;
 
             // 1. 손패 매칭
             const fIdx = field.findIndex(c => c.month === card.month);
             if (fIdx !== -1) {
                 cap.push(card, field.splice(fIdx, 1)[0]);
-                text += "바닥 패 획득! ";
+                logMsg += "바닥 짝 매칭 성공! ";
             } else {
                 field.push(card);
             }
 
-            // 2. 덱에서 뒤집기
+            // 2. 덱 뒤집기
             if (deck.length > 0) {
                 const dCard = deck.pop();
                 const dfIdx = field.findIndex(c => c.month === dCard.month);
                 if (dfIdx !== -1) {
                     cap.push(dCard, field.splice(dfIdx, 1)[0]);
-                    text += `[덱 뒤집기] ${dCard.month}월 추가 획득!`;
+                    logMsg += `[덱 뒤집기] ${dCard.month}월 추가 매칭!`;
                 } else {
                     field.push(dCard);
                 }
             }
 
-            turn = turn === 1 ? 2 : 1;
-            document.getElementById('msg').textContent = text;
+            // 싹쓸이 시 상대 피 1장 뺏기
+            if (field.length === 0 && oppCap.length > 0) {
+                const stolen = oppCap.pop();
+                cap.push(stolen);
+                logMsg += " 💥 싹쓸이! 상대 피 1장 뺏음!";
+            }
+
             render();
-            checkEnd();
+
+            // 점수 체크 (7점 이상 시 고/스톱 여부 결정)
+            const currentScore = pNum === 1 ? p1Score : p2Score;
+            const currentGo = pNum === 1 ? p1Go : p2Go;
+
+            if (currentScore >= 7 + currentGo) {
+                document.getElementById('goStopTitle').textContent = `Player ${pNum} - ${currentScore}점 달성!`;
+                document.getElementById('goStopOverlay').style.display = 'flex';
+            } else {
+                turn = turn === 1 ? 2 : 1;
+                document.getElementById('statusText').textContent = logMsg;
+                checkGameEnd();
+            }
         }
 
-        function checkEnd() {
+        function chooseGo() {
+            if (turn === 1) p1Go++;
+            else p2Go++;
+
+            document.getElementById('goStopOverlay').style.display = 'none';
+            turn = turn === 1 ? 2 : 1;
+            document.getElementById('statusText').textContent = "GO 선언! 턴이 넘어갑니다.";
+            render();
+            checkGameEnd();
+        }
+
+        function chooseStop() {
+            document.getElementById('goStopOverlay').style.display = 'none';
+            const winnerText = document.getElementById('winnerText');
+            const finalScore = turn === 1 ? p1Score : p2Score;
+            winnerText.textContent = `Player ${turn} STOP 승리! 🎉 (${finalScore}점)`;
+            document.getElementById('endOverlay').style.display = 'flex';
+        }
+
+        function checkGameEnd() {
             if (p1Hand.length === 0 && p2Hand.length === 0) {
-                const s1 = parseInt(document.getElementById('p1Score').textContent);
-                const s2 = parseInt(document.getElementById('p2Score').textContent);
-                const winEl = document.getElementById('winnerText');
+                const winnerText = document.getElementById('winnerText');
+                if (p1Score > p2Score) winnerText.textContent = `Player 1 승리! (${p1Score}점)`;
+                else if (p2Score > p1Score) winnerText.textContent = `Player 2 승리! (${p2Score}점)`;
+                else winnerText.textContent = `무승부! (${p1Score}점)`;
 
-                if (s1 > s2) winEl.textContent = `Player 1 승리! (${s1}점)`;
-                else if (s2 > s1) winEl.textContent = `Player 2 승리! (${s2}점)`;
-                else winEl.textContent = `무승부! (${s1}점)`;
-
-                document.getElementById('overlay').style.display = 'flex';
+                document.getElementById('endOverlay').style.display = 'flex';
             }
         }
 
