@@ -3,28 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>엘리멘탈 클래시</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap" rel="stylesheet">
+    <title>2P 카드 듀얼 배틀</title>
     <style>
         :root {
-            --bg-dark: #0f172a;
-            --fire-color: #ff4757;
-            --water-color: #1e90ff;
-            --earth-color: #2ed573;
-            --panel-bg: rgba(255, 255, 255, 0.05);
+            --p1-color: #ff4757;
+            --p2-color: #1e90ff;
+            --bg: #0f172a;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Poppins', 'Pretendard', sans-serif;
+            font-family: 'Pretendard', sans-serif;
             user-select: none;
-            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            background: radial-gradient(circle at center, #1e293b, var(--bg-dark));
+            background-color: var(--bg);
             color: white;
             height: 100vh;
             display: flex;
@@ -32,8 +28,8 @@
             overflow: hidden;
         }
 
-        /* 게임 보드 */
-        .game-board {
+        /* 메인 게임 판 */
+        .board {
             flex: 1;
             display: flex;
             flex-direction: column;
@@ -42,333 +38,324 @@
         }
 
         /* 플레이어 구역 */
-        .player-area {
+        .player-zone {
             flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            padding: 20px;
-            transition: all 0.4s ease;
+            justify-content: space-around;
+            padding: 15px;
+            transition: opacity 0.3s;
         }
 
-        .player2 {
+        .p2-zone {
             transform: rotate(180deg);
-            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 2px dashed rgba(255, 255, 255, 0.1);
         }
 
-        .player1 {
-            border-top: 2px solid rgba(255, 255, 255, 0.1);
+        .p1-zone {
+            border-top: 2px dashed rgba(255, 255, 255, 0.1);
         }
 
-        /* 내 턴일 때 배경 하이라이트 */
-        .active-turn.player1 { background: radial-gradient(circle at bottom, rgba(255,255,255,0.1), transparent 70%); }
-        .active-turn.player2 { background: radial-gradient(circle at bottom, rgba(255,255,255,0.1), transparent 70%); }
-
-        .score-board {
-            font-size: 28px;
-            font-weight: 900;
-            margin-bottom: 20px;
-            letter-spacing: 2px;
-            text-shadow: 0 0 10px rgba(255,255,255,0.3);
-        }
-        
-        .score-board span {
-            font-size: 36px;
-            color: #ffd700;
+        .disabled-turn {
+            opacity: 0.4;
+            pointer-events: none;
         }
 
-        /* 3D 카드 디자인 */
-        .card-container {
-            width: 140px;
-            height: 200px;
-            perspective: 1000px; /* 3D 효과를 위한 원근감 */
-        }
-
-        .card-inner {
+        /* HP 바 및 정보 */
+        .status-bar {
             width: 100%;
+            max-width: 400px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .hp-background {
+            flex: 1;
+            height: 20px;
+            background: #334155;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .hp-fill {
             height: 100%;
-            position: relative;
-            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            transform-style: preserve-3d;
-        }
-
-        .card-container.revealed .card-inner {
-            transform: rotateY(180deg);
-        }
-
-        .card-front, .card-back {
             width: 100%;
-            height: 100%;
-            position: absolute;
-            backface-visibility: hidden;
-            border-radius: 20px;
+            transition: width 0.4s ease;
+        }
+
+        .p1-zone .hp-fill { background: var(--p1-color); }
+        .p2-zone .hp-fill { background: var(--p2-color); }
+
+        .hp-text {
+            font-size: 18px;
+            font-weight: bold;
+            min-width: 70px;
+        }
+
+        /* 손패 덱 */
+        .hand-container {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            width: 100%;
+        }
+
+        /* 카드 스타일 */
+        .card {
+            width: 95px;
+            height: 135px;
+            background: #1e293b;
+            border-radius: 12px;
+            border: 2px solid #475569;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
-            border: 2px solid rgba(255,255,255,0.1);
+            justify-content: space-between;
+            padding: 10px 5px;
+            cursor: pointer;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+            transition: transform 0.15s, border-color 0.15s;
         }
 
-        /* 카드 뒷면 (숨겨진 상태) */
-        .card-front {
-            background: linear-gradient(135deg, #2c3e50, #000000);
-            background-image: radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px);
-            background-size: 10px 10px;
-        }
-        
-        .card-front::after {
-            content: '?';
-            font-size: 60px;
-            color: rgba(255,255,255,0.2);
-            font-weight: bold;
+        .card:active {
+            transform: scale(0.92);
         }
 
-        /* 카드 앞면 (결과) */
-        .card-back {
-            background: rgba(25, 30, 40, 0.95);
-            transform: rotateY(180deg);
-            backdrop-filter: blur(10px);
-        }
+        /* 카드 종류별 테마 */
+        .card[data-type="attack"] { border-color: #ff4757; }
+        .card[data-type="shield"] { border-color: #1e90ff; }
+        .card[data-type="heal"] { border-color: #2ed573; }
+        .card[data-type="crit"] { border-color: #ffa502; }
 
-        .element-icon { font-size: 60px; margin-bottom: 10px; filter: drop-shadow(0 0 10px currentColor); }
-        .power-number { font-size: 48px; font-weight: 900; line-height: 1; }
+        .card-icon { font-size: 32px; }
+        .card-name { font-size: 13px; font-weight: bold; }
+        .card-desc { font-size: 11px; color: #cbd5e1; text-align: center; }
 
-        /* 속성별 컬러 테마 */
-        .card-back.fire { color: var(--fire-color); border-color: var(--fire-color); box-shadow: 0 0 20px rgba(255, 71, 87, 0.4); }
-        .card-back.water { color: var(--water-color); border-color: var(--water-color); box-shadow: 0 0 20px rgba(30, 144, 255, 0.4); }
-        .card-back.earth { color: var(--earth-color); border-color: var(--earth-color); box-shadow: 0 0 20px rgba(46, 213, 115, 0.4); }
-
-        /* 중앙 컨트롤 영역 (Glassmorphism) */
-        .center-area {
+        /* 중앙 알림판 */
+        .center-hud {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            z-index: 10;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(15px);
-            padding: 20px 40px;
-            border-radius: 40px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(15, 23, 42, 0.95);
+            padding: 15px 30px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
             text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            width: 80%;
-            max-width: 350px;
+            z-index: 10;
+            pointer-events: none;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            width: 280px;
         }
 
-        .message {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 20px;
-            color: #f1f2f6;
-            min-height: 30px;
+        .log-text {
+            font-size: 16px;
+            font-weight: bold;
+            color: #f8fafc;
         }
 
-        button {
+        /* 게임 오버 레이어 */
+        .game-over {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            gap: 20px;
+        }
+
+        .game-over h1 { font-size: 40px; }
+        .restart-btn {
             padding: 15px 40px;
-            font-size: 22px;
-            font-weight: 900;
+            font-size: 20px;
+            font-weight: bold;
+            background: #2ed573;
             border: none;
-            border-radius: 50px;
-            background: linear-gradient(135deg, #00c6ff, #0072ff);
+            border-radius: 30px;
             color: white;
             cursor: pointer;
-            box-shadow: 0 10px 20px rgba(0, 114, 255, 0.3);
-            transition: all 0.2s;
-            text-transform: uppercase;
-            width: 100%;
         }
-
-        button:active { transform: scale(0.95); }
-        button:disabled { background: #576574; box-shadow: none; color: #a4b0be; pointer-events: none; }
-
-        /* 승리 시 흔들림 애니메이션 */
-        @keyframes winnerPop {
-            0% { transform: rotateY(180deg) scale(1); }
-            50% { transform: rotateY(180deg) scale(1.15); }
-            100% { transform: rotateY(180deg) scale(1.1); }
-        }
-        .winner-card .card-inner { animation: winnerPop 0.5s forwards; }
-
     </style>
 </head>
 <body>
 
-    <div class="game-board">
-        <!-- Player 2 (Top) -->
-        <div class="player-area player2" id="p2Area">
-            <div class="score-board">P2 SCORE: <span id="score2">0</span></div>
-            <div class="card-container" id="cardCont2">
-                <div class="card-inner">
-                    <div class="card-front"></div>
-                    <div class="card-back" id="cardBack2">
-                        <div class="element-icon" id="icon2"></div>
-                        <div class="power-number" id="num2"></div>
-                    </div>
-                </div>
+    <div class="board">
+        <!-- P2 영역 -->
+        <div class="player-zone p2-zone disabled-turn" id="p2Zone">
+            <div class="status-bar">
+                <span class="hp-text">P2 HP</span>
+                <div class="hp-background"><div class="hp-fill" id="p2HpFill"></div></div>
+                <span class="hp-text" id="p2HpText">30/30</span>
             </div>
+            <div class="hand-container" id="p2Hand"></div>
         </div>
 
-        <!-- Center Arena -->
-        <div class="center-area">
-            <div class="message" id="gameMessage">P1 카드를 뽑으세요</div>
-            <button id="actionBtn" onclick="playTurn()">P1 DRAW</button>
+        <!-- 중앙 알림판 -->
+        <div class="center-hud">
+            <div class="log-text" id="logMsg">P1 차례입니다! 카드를 내세요.</div>
         </div>
 
-        <!-- Player 1 (Bottom) -->
-        <div class="player-area player1 active-turn" id="p1Area">
-            <div class="card-container" id="cardCont1">
-                <div class="card-inner">
-                    <div class="card-front"></div>
-                    <div class="card-back" id="cardBack1">
-                        <div class="element-icon" id="icon1"></div>
-                        <div class="power-number" id="num1"></div>
-                    </div>
-                </div>
+        <!-- P1 영역 -->
+        <div class="player-zone p1-zone" id="p1Zone">
+            <div class="hand-container" id="p1Hand"></div>
+            <div class="status-bar">
+                <span class="hp-text">P1 HP</span>
+                <div class="hp-background"><div class="hp-fill" id="p1HpFill"></div></div>
+                <span class="hp-text" id="p1HpText">30/30</span>
             </div>
-            <div class="score-board">P1 SCORE: <span id="score1">0</span></div>
         </div>
     </div>
 
+    <!-- 승리 화면 (기본 숨김) -->
+    <div class="game-over" id="gameOver" style="display: none;">
+        <h1 id="winnerText">Player 1 승리!</h1>
+        <button class="restart-btn" onclick="initGame()">다시 하기</button>
+    </div>
+
     <script>
-        // 게임 데이터 정의
-        const elements = [
-            { type: 'fire', icon: '🔥', beats: 'earth' },
-            { type: 'water', icon: '💧', beats: 'fire' },
-            { type: 'earth', icon: '🌿', beats: 'water' }
+        const MAX_HP = 30;
+        let p1Hp, p2Hp, currentTurn, p1Shield, p2Shield;
+        let p1Hand = [], p2Hand = [];
+
+        // 카드 데이터베이스
+        const CARD_TYPES = [
+            { type: 'attack', icon: '⚔️', name: '공격', desc: '상대에게 6 데미지' },
+            { type: 'attack', icon: '⚔️', name: '공격', desc: '상대에게 6 데미지' },
+            { type: 'shield', icon: '🛡️', name: '방어', desc: '다음 데미지 무효' },
+            { type: 'heal', icon: '🧪', name: '회복', desc: '내 HP +5 회복' },
+            { type: 'crit', icon: '💥', name: '강격', desc: '상대에게 11 데미지' }
         ];
 
-        let p1Score = 0;
-        let p2Score = 0;
-        let p1Card = null;
-        let p2Card = null;
-        let currentTurn = 1;
-
-        // DOM 요소
-        const actionBtn = document.getElementById('actionBtn');
-        const gameMessage = document.getElementById('gameMessage');
-        const cont1 = document.getElementById('cardCont1');
-        const cont2 = document.getElementById('cardCont2');
-        const back1 = document.getElementById('cardBack1');
-        const back2 = document.getElementById('cardBack2');
-        const p1Area = document.getElementById('p1Area');
-        const p2Area = document.getElementById('p2Area');
-
-        // 랜덤 카드 생성 (속성 + 1~10 숫자)
-        function generateCard() {
-            const randomElement = elements[Math.floor(Math.random() * elements.length)];
-            return {
-                type: randomElement.type,
-                icon: randomElement.icon,
-                beats: randomElement.beats,
-                power: Math.floor(Math.random() * 10) + 1
-            };
+        function getRandomCard() {
+            return CARD_TYPES[Math.floor(Math.random() * CARD_TYPES.length)];
         }
 
-        function resetBoard() {
-            cont1.classList.remove('revealed', 'winner-card');
-            cont2.classList.remove('revealed', 'winner-card');
-            // 이전 속성 클래스 제거
-            back1.className = 'card-back';
-            back2.className = 'card-back';
+        function initGame() {
+            p1Hp = MAX_HP;
+            p2Hp = MAX_HP;
+            currentTurn = 1;
+            p1Shield = false;
+            p2Shield = false;
+
+            document.getElementById('gameOver').style.display = 'none';
+            document.getElementById('logMsg').textContent = "P1 차례입니다! 카드를 내세요.";
+
+            // 초기 손패 3장씩 지급
+            p1Hand = [getRandomCard(), getRandomCard(), getRandomCard()];
+            p2Hand = [getRandomCard(), getRandomCard(), getRandomCard()];
+
+            updateUI();
         }
 
-        // 턴 진행 로직
-        function playTurn() {
-            if (currentTurn === 1) {
-                resetBoard();
-                
-                // P1 카드 생성 및 렌더링 (아직 뒤집지 않음)
-                p1Card = generateCard();
-                document.getElementById('icon1').textContent = p1Card.icon;
-                document.getElementById('num1').textContent = p1Card.power;
-                back1.classList.add(p1Card.type);
+        function renderHand(player, handArray, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            handArray.forEach((card, index) => {
+                const el = document.createElement('div');
+                el.className = 'card';
+                el.setAttribute('data-type', card.type);
+                el.innerHTML = `
+                    <div class="card-icon">${card.icon}</div>
+                    <div class="card-name">${card.name}</div>
+                    <div class="card-desc">${card.desc}</div>
+                `;
+                el.onclick = () => playCard(player, index);
+                container.appendChild(el);
+            });
+        }
 
-                // P1 카드 뒤집기 애니메이션 실행
-                cont1.classList.add('revealed');
-                
-                gameMessage.textContent = "P2 차례입니다";
-                actionBtn.textContent = "P2 DRAW";
-                actionBtn.style.background = "linear-gradient(135deg, #ff4757, #ff6b81)"; // 버튼 색상 변경
-                
-                p1Area.classList.remove('active-turn');
-                p2Area.classList.add('active-turn');
-                
-                currentTurn = 2;
+        function playCard(player, index) {
+            if (player !== currentTurn) return;
 
-            } else if (currentTurn === 2) {
-                // P2 카드 생성 및 렌더링
-                p2Card = generateCard();
-                document.getElementById('icon2').textContent = p2Card.icon;
-                document.getElementById('num2').textContent = p2Card.power;
-                back2.classList.add(p2Card.type);
+            const hand = (player === 1) ? p1Hand : p2Hand;
+            const playedCard = hand[index];
+            let log = `P${player}: [${playedCard.name}] 사용! `;
 
-                cont2.classList.add('revealed');
-                actionBtn.disabled = true;
-                gameMessage.textContent = "BATTLE!";
-                
-                // 카드가 완전히 뒤집힌 후(0.6초) 승패 계산
-                setTimeout(() => {
-                    resolveBattle();
-                }, 800);
+            // 카드 효과 처리
+            if (playedCard.type === 'attack') {
+                log += applyDamage(player === 1 ? 2 : 1, 6);
+            } else if (playedCard.type === 'crit') {
+                log += applyDamage(player === 1 ? 2 : 1, 11);
+            } else if (playedCard.type === 'shield') {
+                if (player === 1) p1Shield = true;
+                else p2Shield = true;
+                log += "방어막 생성!";
+            } else if (playedCard.type === 'heal') {
+                if (player === 1) p1Hp = Math.min(MAX_HP, p1Hp + 5);
+                else p2Hp = Math.min(MAX_HP, p2Hp + 5);
+                log += "HP +5 회복!";
             }
+
+            // 사용한 카드 보충
+            hand[index] = getRandomCard();
+
+            // 턴 교체
+            currentTurn = (currentTurn === 1) ? 2 : 1;
+            document.getElementById('logMsg').textContent = log;
+
+            updateUI();
+            checkGameOver();
         }
 
-        // 승패 판정 로직
-        function resolveBattle() {
-            let winner = 0; // 0: 무승부, 1: P1 승, 2: P2 승
-            let reason = "";
-
-            // 1. 속성 상성 체크
-            if (p1Card.beats === p2Card.type) {
-                winner = 1;
-                reason = "속성 상성 승리!";
-            } else if (p2Card.beats === p1Card.type) {
-                winner = 2;
-                reason = "속성 상성 승리!";
-            } else {
-                // 2. 속성이 같으면 숫자 비교
-                if (p1Card.power > p2Card.power) {
-                    winner = 1;
-                    reason = "파워 승리!";
-                } else if (p2Card.power > p1Card.power) {
-                    winner = 2;
-                    reason = "파워 승리!";
-                } else {
-                    reason = "완벽한 무승부!";
+        function applyDamage(targetPlayer, amount) {
+            if (targetPlayer === 1) {
+                if (p1Shield) {
+                    p1Shield = false;
+                    return "P1이 데미지를 막았습니다!";
                 }
-            }
-
-            // 결과 적용
-            if (winner === 1) {
-                gameMessage.textContent = `P1 승리! (${reason})`;
-                p1Score++;
-                document.getElementById('score1').textContent = p1Score;
-                cont1.classList.add('winner-card');
-            } else if (winner === 2) {
-                gameMessage.textContent = `P2 승리! (${reason})`;
-                p2Score++;
-                document.getElementById('score2').textContent = p2Score;
-                cont2.classList.add('winner-card');
+                p1Hp = Math.max(0, p1Hp - amount);
             } else {
-                gameMessage.textContent = reason;
+                if (p2Shield) {
+                    p2Shield = false;
+                    return "P2가 데미지를 막았습니다!";
+                }
+                p2Hp = Math.max(0, p2Hp - amount);
             }
-
-            // 다음 라운드 대기
-            setTimeout(() => {
-                gameMessage.textContent = "다음 라운드! P1 뽑으세요";
-                actionBtn.textContent = "P1 DRAW";
-                actionBtn.style.background = "linear-gradient(135deg, #00c6ff, #0072ff)";
-                actionBtn.disabled = false;
-                
-                p2Area.classList.remove('active-turn');
-                p1Area.classList.add('active-turn');
-                
-                currentTurn = 1;
-            }, 2000);
+            return `데미지 -${amount}!`;
         }
+
+        function updateUI() {
+            // HP 업데이트
+            document.getElementById('p1HpText').textContent = `${p1Hp}/${MAX_HP}`;
+            document.getElementById('p2HpText').textContent = `${p2Hp}/${MAX_HP}`;
+            document.getElementById('p1HpFill').style.width = `${(p1Hp / MAX_HP) * 100}%`;
+            document.getElementById('p2HpFill').style.width = `${(p2Hp / MAX_HP) * 100}%`;
+
+            // 손패 렌더링
+            renderHand(1, p1Hand, 'p1Hand');
+            renderHand(2, p2Hand, 'p2Hand');
+
+            // 턴 비활성화 처리
+            const p1Zone = document.getElementById('p1Zone');
+            const p2Zone = document.getElementById('p2Zone');
+
+            if (currentTurn === 1) {
+                p1Zone.classList.remove('disabled-turn');
+                p2Zone.classList.add('disabled-turn');
+            } else {
+                p2Zone.classList.remove('disabled-turn');
+                p1Zone.classList.add('disabled-turn');
+            }
+        }
+
+        function checkGameOver() {
+            if (p1Hp <= 0 || p2Hp <= 0) {
+                const gameOver = document.getElementById('gameOver');
+                const winnerText = document.getElementById('winnerText');
+                winnerText.textContent = p1Hp <= 0 ? "Player 2 최종 승리!" : "Player 1 최종 승리!";
+                gameOver.style.display = 'flex';
+            }
+        }
+
+        // 게임 시작
+        initGame();
     </script>
 </body>
 </html>
