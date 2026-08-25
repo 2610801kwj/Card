@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>2인용 태블릿 카드 게임</title>
+    <style>
+        :root {
+            --p1-color: #ff4757;
+            --p2-color: #1e90ff;
+            --bg-color: #2f3542;
+            --card-bg: #ffffff;
+            --special-color: #9c88ff; /* 특수 카드 색상 */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Pretendard', -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .game-board {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .player-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            transition: background 0.3s ease;
+        }
+
+        .player2 {
+            transform: rotate(180deg);
+            border-bottom: 2px dashed rgba(255, 255, 255, 0.2);
+        }
+
+        .player1 {
+            border-top: 2px dashed rgba(255, 255, 255, 0.2);
+        }
+
+        .active-turn.player1 { background: linear-gradient(to top, rgba(255, 71, 87, 0.2), transparent); }
+        .active-turn.player2 { background: linear-gradient(to top, rgba(30, 144, 255, 0.2), transparent); }
+
+        .score-board {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .player1 .score-board { color: var(--p1-color); }
+        .player2 .score-board { color: var(--p2-color); }
+
+        .card {
+            width: 120px;
+            height: 180px;
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 64px;
+            font-weight: 900;
+            color: #2ed573;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            border: 8px solid #dfe4ea;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background-image: repeating-linear-gradient(45deg, #a4b0be 25%, transparent 25%, transparent 75%, #a4b0be 75%, #a4b0be), repeating-linear-gradient(45deg, #a4b0be 25%, #ced6e0 25%, #ced6e0 75%, #a4b0be 75%, #a4b0be);
+            background-position: 0 0, 10px 10px;
+            background-size: 20px 20px;
+            text-align: center;
+        }
+
+        .card.revealed {
+            background-image: none;
+            transform: scale(1.05);
+        }
+
+        /* 특수 카드용 텍스트 크기 조정 */
+        .card.special {
+            font-size: 28px;
+            color: var(--special-color) !important;
+            border-color: var(--special-color);
+        }
+
+        .center-area {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 10;
+            background: rgba(47, 53, 66, 0.9);
+            padding: 20px 40px;
+            border-radius: 30px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+
+        .message {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #f1f2f6;
+            text-align: center;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 20px;
+            font-weight: bold;
+            border: none;
+            border-radius: 50px;
+            background: #ffa502;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(255, 165, 2, 0.4);
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        button:disabled {
+            background: #747d8c;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-board">
+        <div class="player-area player2" id="p2Area">
+            <div class="score-board">Player 2 <span id="score2">0</span></div>
+            <div class="card" id="card2"></div>
+        </div>
+
+        <div class="center-area">
+            <div class="message" id="gameMessage">P1 먼저 카드를 뽑으세요!</div>
+            <button id="actionBtn" onclick="drawCard()">P1 뽑기</button>
+        </div>
+
+        <div class="player-area player1 active-turn" id="p1Area">
+            <div class="card" id="card1"></div>
+            <div class="score-board">Player 1 <span id="score1">0</span></div>
+        </div>
+    </div>
+
+    <script>
+        let p1Score = 0;
+        let p2Score = 0;
+        let currentTurn = 1; 
+        let p1CardValue = 0;
+        let p2CardValue = 0;
+
+        const actionBtn = document.getElementById('actionBtn');
+        const gameMessage = document.getElementById('gameMessage');
+        const card1 = document.getElementById('card1');
+        const card2 = document.getElementById('card2');
+        const p1Area = document.getElementById('p1Area');
+        const p2Area = document.getElementById('p2Area');
+
+        // 카드 뽑기 (15% 확률로 STEAL 카드, 나머지는 1~10 숫자)
+        function getRandomCard() {
+            if (Math.random() < 0.15) {
+                return "STEAL!";
+            }
+            return Math.floor(Math.random() * 10) + 1;
+        }
+
+        function resetCards() {
+            card1.textContent = '';
+            card2.textContent = '';
+            card1.classList.remove('revealed', 'special');
+            card2.classList.remove('revealed', 'special');
+            card1.style.color = '#2ed573';
+            card2.style.color = '#2ed573';
+            card1.style.borderColor = '#dfe4ea';
+            card2.style.borderColor = '#dfe4ea';
+        }
+
+        // 카드 렌더링 함수
+        function renderCard(cardElement, value) {
+            cardElement.textContent = value;
+            cardElement.classList.add('revealed');
+            if (value === "STEAL!") {
+                cardElement.classList.add('special');
+            }
+        }
+
+        function drawCard() {
+            if (currentTurn === 1) {
+                resetCards();
+                p1CardValue = getRandomCard();
+                renderCard(card1, p1CardValue);
+                
+                gameMessage.textContent = "P2 차례입니다!";
+                actionBtn.textContent = "P2 뽑기";
+                
+                p1Area.classList.remove('active-turn');
+                p2Area.classList.add('active-turn');
+                
+                currentTurn = 2;
+            } else if (currentTurn === 2) {
+                p2CardValue = getRandomCard();
+                renderCard(card2, p2CardValue);
+                
+                actionBtn.disabled = true; 
+                
+                setTimeout(() => {
+                    determineWinner();
+                }, 800);
+            }
+        }
+
+        // 화면 점수 업데이트
+        function updateScores() {
+            document.getElementById('score1').textContent = p1Score;
+            document.getElementById('score2').textContent = p2Score;
+        }
+
+        // 승패 판정 로직
+        function determineWinner() {
+            const isP1Steal = (p1CardValue === "STEAL!");
+            const isP2Steal = (p2CardValue === "STEAL!");
+
+            if (isP1Steal && isP2Steal) {
+                gameMessage.textContent = "둘 다 STEAL! 무승부!";
+            } else if (isP1Steal) {
+                gameMessage.textContent = "P1이 점수를 뺏었습니다!";
+                p1Score++;
+                if (p2Score > 0) p2Score--; // 상대 점수가 0보다 클 때만 깎음
+            } else if (isP2Steal) {
+                gameMessage.textContent = "P2가 점수를 뺏었습니다!";
+                p2Score++;
+                if (p1Score > 0) p1Score--;
+            } else {
+                // 일반 숫자 대결
+                if (p1CardValue > p2CardValue) {
+                    gameMessage.textContent = "Player 1 승리!";
+                    card1.style.color = 'var(--p1-color)';
+                    p1Score++;
+                } else if (p2CardValue > p1CardValue) {
+                    gameMessage.textContent = "Player 2 승리!";
+                    card2.style.color = 'var(--p2-color)';
+                    p2Score++;
+                } else {
+                    gameMessage.textContent = "무승부!";
+                }
+            }
+
+            updateScores();
+
+            // 다음 라운드 준비
+            setTimeout(() => {
+                gameMessage.textContent = "다음 라운드! P1 뽑으세요";
+                actionBtn.textContent = "P1 뽑기";
+                actionBtn.disabled = false;
+                
+                p2Area.classList.remove('active-turn');
+                p1Area.classList.add('active-turn');
+                
+                currentTurn = 1;
+            }, 1800);
+        }
+    </script>
+</body>
+</html>
+
